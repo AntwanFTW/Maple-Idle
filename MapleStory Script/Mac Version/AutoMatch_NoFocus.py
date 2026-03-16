@@ -1,8 +1,3 @@
-# Updated to use cpu which makes
-# it less intensive on Mac
-#
-
-
 # ===============================
 # macOS Retina Scaling Fix
 # ===============================
@@ -13,101 +8,14 @@ os.environ["QT_SCALE_FACTOR"] = "1"
 import pyautogui
 import time
 import cv2
-import subprocess
 from pyautogui import ImageNotFoundException
 
-# python3 -m pip install pyautogui
-# python3 -m pip install opencv-python
-
-
 # -------------------------------
-# Focus BlueStacks (macOS)
+# Key Inputs
 # -------------------------------
-last_focus = 0
-FOCUS_COOLDOWN = 1.5
-
-def focus_bluestacks(window_name="BlueStacks Air Other"):
-    global last_focus
-    now = time.time()
-
-    if now - last_focus < FOCUS_COOLDOWN:
-        return
-
-    script = f'''
-    tell application "System Events"
-        tell process "BlueStacks"
-            set frontmost to true
-            click (first window whose name contains "{window_name}")
-        end tell
-    end tell
-    '''
-
-    subprocess.run(["osascript", "-e", script], check=False)
-
-    last_focus = now
-    time.sleep(0.2)
-
-# Function for getting bluestack Size
-import subprocess
-
-def get_bluestacks_size():
-    script = '''
-    tell application "System Events"
-        tell process "BlueStacks"
-            set winBounds to bounds of front window
-        end tell
-    end tell
-    return winBounds
-    '''
-    result = subprocess.run(
-        ["osascript", "-e", script],
-        capture_output=True,
-        text=True
-    )
-    # result like: "0, 23, 1280, 743"
-    parts = [int(p.strip()) for p in result.stdout.strip().split(",")]
-    left, top, right, bottom = parts
-    width = right - left
-    height = bottom - top
-    print(f"BlueStacks size: {width}x{height}, position: ({left}, {top})")
-    return (left, top, width, height)
-
-def get_bluestacks_size():
-    script = '''
-    tell application "System Events"
-        tell process "BlueStacks"
-            set winBounds to bounds of front window
-        end tell
-    end tell
-    return winBounds
-    '''
-    result = subprocess.run(
-        ["osascript", "-e", script],
-        capture_output=True,
-        text=True
-    )
-    out = result.stdout.strip()
-    err = result.stderr.strip()
-
-    print(f"AppleScript stdout: {repr(out)}")
-    if err:
-        print(f"AppleScript stderr: {err}")
-
-    if not out:
-        print("Could not get BlueStacks window bounds (no output).")
-        return None
-
-    parts = [p.strip() for p in out.split(",") if p.strip()]
-    if len(parts) != 4 or not all(p.lstrip("-").isdigit() for p in parts):
-        print(f"Unexpected bounds format: {out}")
-        return None
-
-    left, top, right, bottom = [int(p) for p in parts]
-    width = right - left
-    height = bottom - top
-    print(f"BlueStacks size: {width}x{height}, position: ({left}, {top})")
-    return (left, top, width, height)
-
+AUTOMATCH_KEY = "9"
+ACCEPT_KEY = "6"
+LEAVE_KEY = "7"
 
 # -------------------------------
 # Image Paths
@@ -121,12 +29,8 @@ LEAVE_IMG     = os.path.join(BASE_DIR, "leave.png")
 # -------------------------------
 # Configuration
 # -------------------------------
-CONFIDENCE = 0.8
+CONFIDENCE = 0.75
 USE_GRAYSCALE = True
-
-AUTOMATCH_KEY = "9"
-ACCEPT_KEY    = "6"
-LEAVE_KEY     = "7"
 
 AUTOMATCH_COOLDOWN = 2
 ACCEPT_COOLDOWN    = 2
@@ -143,17 +47,20 @@ last_leave     = 0
 # Startup
 # -------------------------------
 print("Automatch Bot running")
-print("Initial BlueStacks size:", get_bluestacks_size())
-set_bluestacks_size(1280, 720, 0, 23)  # your desired size/position
-print('BlueStacks size was changed to "1280x720"')
 print("9 = Automatch | 6 = Accept | 7 = Leave")
+print("Full screen scan enabled")
 print("Stop with Ctrl + C")
+
 time.sleep(2)
 
+#new screen size check
+
+
 # -------------------------------
-# Main Loop (CPU optimized)
+# Main Loop
 # -------------------------------
 while True:
+
     now = time.time()
     action_taken = False
 
@@ -172,7 +79,6 @@ while True:
 
         if accept_btn:
             print("Accept detected → 6")
-            focus_bluestacks()
             pyautogui.press(ACCEPT_KEY)
             last_accept = now
             action_taken = True
@@ -192,7 +98,6 @@ while True:
 
         if auto_btn:
             print("Automatch detected → 9")
-            focus_bluestacks()
             pyautogui.press(AUTOMATCH_KEY)
             last_automatch = now
             action_taken = True
@@ -212,13 +117,12 @@ while True:
 
         if leave_btn:
             print("Leave detected → 7")
-            focus_bluestacks()
             pyautogui.press(LEAVE_KEY)
             last_leave = now
             action_taken = True
 
     # -------------------------------
-    # CPU-friendly sleep
+    # CPU Friendly Sleep
     # -------------------------------
     if action_taken:
         time.sleep(0.35)
