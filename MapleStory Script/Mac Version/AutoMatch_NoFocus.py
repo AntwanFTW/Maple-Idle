@@ -29,7 +29,7 @@ LEAVE_IMG     = os.path.join(BASE_DIR, "leave.png")
 # -------------------------------
 # Configuration
 # -------------------------------
-CONFIDENCE = 0.75
+CONFIDENCE = 0.8
 USE_GRAYSCALE = True
 
 AUTOMATCH_COOLDOWN = 2
